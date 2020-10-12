@@ -2,21 +2,75 @@
 
 |Field|Value|
 |-:|:-|
-|Name|yourname|
-|ID|your student id|
+|Name|曾文鼎|
+|ID|0716023|
 
 ## How much time did you spend on this project
-
-e.g. 2 hours.
+約三到四小時。
 
 ## Project overview
+scanner.l 依照 lex 檔案的需求，分為三個部分。
 
-Describe the project structure and how you implemented it.
+### Declaration
+
+主要定義各種 macro 給 Rules 呼叫。此外還有以下變數：
+- `buffer` 用來儲存 code 的內容。
+- 宣告兩個用來記錄 option 開啟與否的 flag `opt_src` 和 `opt_tok` 。
+- 變數 `line_num` 記錄目前已讀入的行數。
+
+### Rules 
+詳細訂一各種規則。簡單的規則如 delimieters 、 keywords 、 operators 等不贅述。
+
+#### 字串
+需要辨認各種可視的字元，其中包含：
+- ASCII 中除 `"` 的可見字元。可見字元集中於 0x20 至 0x7e 之間。排除掉 0x22 的 `"`，可以視為以下兩個要素。
+  - 0x20 (空格) 和 0x21 `!`
+  - 0x23 `#` 至 0x7e `~` 的所有字元。
+- `\t`
+- 兩個連續雙引號 `\"\"`
+兼容以上三點，加上首尾各一 `"` ，得到 `\"(\"\"|[\t !#-~])*\"` 。
+
+室友以定義新 state 的方式繞過連續雙引號的處理，個人覺得沒必要。
+
+#### 整數
+
+八進位整數沒有不得有前綴 `0` 的限制，八進位可以輕鬆表示為 `0[0-7]+` 。
+
+十進位數除了整數 `0` 之外，不得有前綴 `0` ，否則視為八進位數。因此需要兼容以下兩項要素：
+- `0`
+- `[1-9][0-9]*`
+
+故十進位表示法為 `0|[1-9][0-9]*`
+
+#### 浮點數
+浮點數嚴格規定不可有冗餘的 `0` ，且必須以十進位表示。
+- 其整數部分可以輕鬆表示為 `0|[1-9][0-9]*` 。
+- 其小數部分可以為以下其中一項
+  - 單一個 `0` ，即 `0` 。
+  - 非 `0` 結尾之數，即 `[0-9]*[1-9]+`
+  故小數部分表示法為 `0|[0-9]*[1-9]+`
+
+考慮以上兩點，加上小數點 `.` ，得到 `(0|[1-9][0-9]*)\.(0|[0-9]*[1-9]+)`
+
+#### 科學記號
+科學記號的 `E` 或 `e` 後可接 `+` 或 `-` 或省略 ，表示為 `[Ee][+-]?` 。整數與小數的處理部分同上。
+
+#### 單行註解
+`\/\/.*` 可以處理此情況。
+
+#### 多行註解
+定義 `C_COMMENT` 表示多行註解的狀態。當 scanner 讀到 `/*` 時，進入 `C_COMMENT` state 。
+
+#### Error
+當所有規則都對不上時，可以視為發生錯誤。故可以定義規則 `.` 於最後一位。
+
+只有當處於 `C_COMMENT` state 時，以下規則會被觸發。故需宣告 `%x C_COMMENT` 。
+- 讀到 `\n` 時，視情況輸出該行。
+- 讀到 `*/` 時，離開 C_COMMENT state。
+- 否則無行為。
+
+### Auxiliary Functions
+大部分 token 都以 `printf` 格式化直接輸出，但 string token 需要處理連署雙引號問題，定義 `printstr` 做輸出。
 
 ## What is the hardest you think in this project
-
-Let us know, if any.
-
-## Feedback to T.A.s
-
-> Please help us improve our assignment, thanks.
+Learning how to write lex 。
