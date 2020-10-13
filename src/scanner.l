@@ -67,11 +67,11 @@ array|begin|boolean|def|do|else|end|false|for|integer|if|of|print|read|real|stri
 [+\-/*<>=]|<=|>=|<>|:=|and|or|not|mod { tokoper(yytext); }
 
 [1-9][0-9]*(\.(0|0*[1-9]+))?[Ee][+-]?(0|[1-9][0-9]*) { toksc(yytext); }
-(0|[1-9][0-9]*)\.(0|0*[1-9]+) { tokfloat(yytext); }
+(0|[1-9][0-9]*)\.(0|[0-9]*[1-9]+) { tokfloat(yytext); }
 0[0-7]+ { tokoct(yytext); }
 0|[1-9][0-9]* { tokdec(yytext); }
 
-\"([\t !#-~]|(\"\"))*\" { tokstr(yytext); }
+\"([\t !#-~]|\"\")*\" { tokstr(yytext); }
 [a-zA-Z][1-9a-zA-Z]* { tokid(yytext); }
 [ \t] { ls; }
 
